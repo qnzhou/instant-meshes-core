@@ -15,4 +15,8 @@
 
 #include "common.h"
 
-extern void remove_nonmanifold(MatrixXu &F, MatrixXf &V, MatrixXf &Nf);
+namespace instant_meshes {
+
+extern void remove_nonmanifold(MatrixXu& F, MatrixXf& V, MatrixXf& Nf);
+
+}

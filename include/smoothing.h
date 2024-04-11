@@ -13,14 +13,24 @@
 
 #pragma once
 
-#include "common.h"
 #include <set>
+#include "common.h"
+
+namespace instant_meshes {
 
 class BVH;
 
-extern void smoothing(int smooth_iterations, 
-                      MatrixXu& F, MatrixXf& O, MatrixXf& N,
-                      const std::set<uint32_t>& crease,
-                      uint32_t nV, uint32_t nF, 
-                      Float scale = 1.0, BVH* bvh = nullptr,
-                      int posy = 4, bool pure_quad = true);
+extern void smoothing(
+    int smooth_iterations,
+    MatrixXu& F,
+    MatrixXf& O,
+    MatrixXf& N,
+    const std::set<uint32_t>& crease,
+    uint32_t nV,
+    uint32_t nF,
+    Float scale = 1.0,
+    BVH* bvh = nullptr,
+    int posy = 4,
+    bool pure_quad = true);
+
+} // namespace instant_meshes

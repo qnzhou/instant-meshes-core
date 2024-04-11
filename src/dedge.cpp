@@ -13,17 +13,25 @@
 
 #include "dedge.h"
 
-void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
-                         VectorXu &E2E, VectorXb &boundary, VectorXb &nonManifold,
-                         const ProgressCallback &progress, bool quiet) {
+namespace instant_meshes {
+
+void build_dedge(
+    const MatrixXu& F,
+    const MatrixXf& V,
+    VectorXu& V2E,
+    VectorXu& E2E,
+    VectorXb& boundary,
+    VectorXb& nonManifold,
+    const ProgressCallback& progress,
+    bool quiet)
+{
     if (!quiet) {
         cout << "Building a directed edge data structure .. ";
         cout.flush();
     }
     Timer<> timer;
 
-    if (progress && !quiet)
-        progress("Building directed edge data structure", 0.0f);
+    if (progress && !quiet) progress("Building directed edge data structure", 0.0f);
 
     V2E.resize(V.cols());
     V2E.setConstant(INVALID);
@@ -32,17 +40,16 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
     std::vector<std::pair<uint32_t, uint32_t>> tmp(F.size());
 
     tbb::parallel_for(
-        tbb::blocked_range<uint32_t>(0u, (uint32_t) F.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
+        tbb::blocked_range<uint32_t>(0u, (uint32_t)F.cols(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
             for (uint32_t f = range.begin(); f != range.end(); ++f) {
                 for (uint32_t i = 0; i < deg; ++i) {
-                    uint32_t idx_cur = F(i, f),
-                             idx_next = F((i+1)%deg, f),
+                    uint32_t idx_cur = F(i, f), idx_next = F((i + 1) % deg, f),
                              edge_id = deg * f + i;
                     if (idx_cur >= V.cols() || idx_next >= V.cols())
-                        throw std::runtime_error("Mesh data contains an out-of-bounds vertex reference!");
-                    if (idx_cur == idx_next)
-                        continue;
+                        throw std::runtime_error(
+                            "Mesh data contains an out-of-bounds vertex reference!");
+                    if (idx_cur == idx_next) continue;
 
                     tmp[edge_id] = std::make_pair(idx_next, INVALID);
                     if (!atomicCompareAndExchange(&V2E[idx_cur], edge_id, INVALID)) {
@@ -54,8 +61,7 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
             }
             if (!quiet)
                 SHOW_PROGRESS_RANGE(range, F.cols(), "Building directed edge data structure (1/3)");
-        }
-    );
+        });
 
     nonManifold.resize(V.cols());
     nonManifold.setConstant(false);
@@ -64,16 +70,14 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
     E2E.setConstant(INVALID);
 
     tbb::parallel_for(
-        tbb::blocked_range<uint32_t>(0u, (uint32_t) F.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
+        tbb::blocked_range<uint32_t>(0u, (uint32_t)F.cols(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
             for (uint32_t f = range.begin(); f != range.end(); ++f) {
                 for (uint32_t i = 0; i < deg; ++i) {
-                    uint32_t idx_cur = F(i, f),
-                             idx_next = F((i+1)%deg, f),
+                    uint32_t idx_cur = F(i, f), idx_next = F((i + 1) % deg, f),
                              edge_id_cur = deg * f + i;
 
-                    if (idx_cur == idx_next)
-                        continue;
+                    if (idx_cur == idx_next) continue;
 
                     uint32_t it = V2E[idx_next], edge_id_opp = INVALID;
                     while (it != INVALID) {
@@ -98,8 +102,7 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
             }
             if (!quiet)
                 SHOW_PROGRESS_RANGE(range, F.cols(), "Building directed edge data structure (2/3)");
-        }
-    );
+        });
 
     std::atomic<uint32_t> nonManifoldCounter(0), boundaryCounter(0), isolatedCounter(0);
 
@@ -108,8 +111,8 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
 
     /* Detect boundary regions of the mesh and adjust vertex->edge pointers*/
     tbb::parallel_for(
-        tbb::blocked_range<uint32_t>(0u, (uint32_t) V.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
+        tbb::blocked_range<uint32_t>(0u, (uint32_t)V.cols(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
             for (uint32_t i = range.begin(); i != range.end(); ++i) {
                 uint32_t edge = V2E[i];
                 if (edge == INVALID) {
@@ -125,7 +128,7 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
                 /* Walk backwards to the first boundary edge (if any) */
                 uint32_t start = edge, v2e = INVALID;
                 do {
-                    v2e  = std::min(v2e, edge);
+                    v2e = std::min(v2e, edge);
                     uint32_t prevEdge = E2E[dedge_prev(edge, deg)];
                     if (prevEdge == INVALID) {
                         /* Reached boundary -- update the vertex->edge link */
@@ -140,17 +143,14 @@ void build_dedge(const MatrixXu &F, const MatrixXf &V, VectorXu &V2E,
             }
             if (!quiet)
                 SHOW_PROGRESS_RANGE(range, V.cols(), "Building directed edge data structure (3/3)");
-        }
-    );
+        });
 
     if (!quiet) {
         cout << "done. (";
-        if (nonManifoldCounter)
-            cout << nonManifoldCounter << " non-manifold vertices, ";
-        if (boundaryCounter)
-            cout << boundaryCounter << " boundary vertices, ";
-        if (isolatedCounter)
-            cout << isolatedCounter << " isolated vertices, ";
+        if (nonManifoldCounter) cout << nonManifoldCounter << " non-manifold vertices, ";
+        if (boundaryCounter) cout << boundaryCounter << " boundary vertices, ";
+        if (isolatedCounter) cout << isolatedCounter << " isolated vertices, ";
         cout << "took " << timeString(timer.value()) << ")" << endl;
     }
 }
+} // namespace instant_meshes

@@ -16,26 +16,37 @@
 
 #include "aabb.h"
 
-struct MeshStats {
+namespace instant_meshes {
+
+struct MeshStats
+{
     AABB mAABB;
     Vector3f mWeightedCenter;
     double mAverageEdgeLength;
     double mMaximumEdgeLength;
     double mSurfaceArea;
 
-    MeshStats() :
-        mWeightedCenter(Vector3f::Zero()),
-        mAverageEdgeLength(0.0f),
-        mMaximumEdgeLength(0.0f),
-        mSurfaceArea(0.0f) { }
+    MeshStats()
+        : mWeightedCenter(Vector3f::Zero())
+        , mAverageEdgeLength(0.0f)
+        , mMaximumEdgeLength(0.0f)
+        , mSurfaceArea(0.0f)
+    {}
 };
 
-extern MeshStats
-compute_mesh_stats(const MatrixXu &F, const MatrixXf &V,
-                   bool deterministic = false,
-                   const ProgressCallback &progress = ProgressCallback());
+extern MeshStats compute_mesh_stats(
+    const MatrixXu& F,
+    const MatrixXf& V,
+    bool deterministic = false,
+    const ProgressCallback& progress = ProgressCallback());
 
 void compute_dual_vertex_areas(
-    const MatrixXu &F, const MatrixXf &V, const VectorXu &V2E,
-    const VectorXu &E2E, const VectorXb &nonManifold, VectorXf &A,
-    const ProgressCallback &progress = ProgressCallback());
+    const MatrixXu& F,
+    const MatrixXf& V,
+    const VectorXu& V2E,
+    const VectorXu& E2E,
+    const VectorXb& nonManifold,
+    VectorXf& A,
+    const ProgressCallback& progress = ProgressCallback());
+
+} // namespace instant_meshes
