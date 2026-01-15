@@ -1,0 +1,25 @@
+name: build and test
+
+on: [push]
+
+jobs:
+    build-Ubuntu:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: build
+              run: |
+                  mkdir build
+                  cd build
+                  cmake .. -DMTET_BUILD_TESTS=On -DCMAKE_BUILD_TYPE=Release
+                  cmake --build . --config Release -j
+    build-Windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: build
+              run: |
+                  mkdir build
+                  cd build
+                  cmake .. -DCMAKE_GENERATOR_PLATFORM=x64 -DMTET_BUILD_TESTS=On
+                  cmake --build . --config Release -j
