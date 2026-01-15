@@ -47,14 +47,6 @@ elseif(APPLE)
   #string(REGEX REPLACE "^.*X([0-9.]*).sdk$" "\\1" CMAKE_OSX_DEPLOYMENT_TARGET "${CMAKE_OSX_SYSROOT}")
 endif()
 
-# Enable C++20 mode on GCC / Clang
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++20")
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
-endif()
-
-
 # Compile instant meshes with various compiler warnings turned on
 if(MSVC)
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -94,4 +86,5 @@ file(GLOB_RECURSE INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 add_library(instant-meshes-core STATIC ${SRC_FILES} ${INC_FILES})
 target_link_libraries(instant-meshes-core TBB::tbb dset::dset pcg32::pcg32 Eigen3::Eigen)
 target_include_directories(instant-meshes-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
