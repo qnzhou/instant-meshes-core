@@ -2,7 +2,7 @@
 
 This is a headless C++ library refactored from the
 [instant-meshes](https://github.com/wjakob/instant-meshes) repo. It provides core functionalities
-described in the Siggraph paper "[Instant Field-Aligned
+described in the Siggraph Asia paper "[Instant Field-Aligned
 Meshes](https://igl.ethz.ch/projects/instant-meshes/)"[^1] without any graphical user interface
 (GUI).
 
