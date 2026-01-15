@@ -12,6 +12,7 @@
 */
 
 #include "normal.h"
+#include <numbers>
 #include "dedge.h"
 
 namespace instant_meshes {
@@ -175,7 +176,7 @@ void generate_crease_normals(
     std::map<uint32_t, uint32_t>& creases,
     const ProgressCallback& progress)
 {
-    const Float dpThreshold = std::cos(angleThreshold * M_PI / 180);
+    const Float dpThreshold = std::cos(angleThreshold * std::numbers::pi_v<Float> / 180);
 
     cout << "Computing vertex & crease normals .. ";
     cout.flush();
@@ -318,7 +319,7 @@ void generate_crease_normals(
     std::set<uint32_t>& creases,
     const ProgressCallback& progress)
 {
-    const Float dpThreshold = std::cos(angleThreshold * M_PI / 180);
+    const Float dpThreshold = std::cos(angleThreshold * std::numbers::pi_v<Float> / 180);
 
     cout << "Computing vertex & crease normals .. ";
     cout.flush();

@@ -15,6 +15,7 @@
 
 #include "adjacency.h"
 #include <map>
+#include <numbers>
 #include <set>
 #include "bvh.h"
 #include "dedge.h"
@@ -325,7 +326,7 @@ AdjacencyMatrix generate_adjacency_matrix_pointcloud(
        is a biased estimate due to the kNN queries, but it's convenient and
        reasonably accurate) */
     stats.mSurfaceArea =
-        M_PI * stats.mAverageEdgeLength * stats.mAverageEdgeLength * 0.5f * V.cols();
+        std::numbers::pi_v<Float> * stats.mAverageEdgeLength * stats.mAverageEdgeLength * 0.5f * V.cols();
 
     cout << "done. (took " << timeString(timer.value()) << ")" << endl;
     return adj;

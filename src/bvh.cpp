@@ -12,6 +12,7 @@
 */
 
 #include "bvh.h"
+#include <numbers>
 #include <tbb/task_group.h>
 #include <tbb/parallel_invoke.h>
 
@@ -717,7 +718,7 @@ void BVH::findKNearest(
     uint32_t stack_idx = 0;
     Float radius2 = radius * radius;
     bool isHeap = false;
-    angleThresh = std::cos(angleThresh * M_PI / 180);
+    angleThresh = std::cos(angleThresh * std::numbers::pi_v<Float> / 180);
     auto comp = [](const std::pair<Float, uint32_t>& v1, const std::pair<Float, uint32_t>& v2) {
         return v1.first < v2.first;
     };

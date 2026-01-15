@@ -14,6 +14,7 @@
 
 #include "hierarchy.h"
 #include <algorithm>
+#include <numbers>
 #include <pcg32.h>
 #include "dedge.h"
 #include "field.h"
@@ -480,7 +481,7 @@ void init_random_tangent(const MatrixXf& N, MatrixXf& Q)
             for (uint32_t i = range.begin(); i != range.end(); ++i) {
                 Vector3f s, t;
                 coordinate_system(N.col(i), s, t);
-                float angle = rng.nextFloat() * 2 * M_PI;
+                float angle = rng.nextFloat() * 2 * std::numbers::pi_v<float>;
                 Q.col(i) = s * std::cos(angle) + t * std::sin(angle);
             }
         });

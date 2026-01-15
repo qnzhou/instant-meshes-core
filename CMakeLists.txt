@@ -15,7 +15,7 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endif()
 
-# Sanitize build environment for static build with C++11
+# Sanitize build environment for static build with C++20
 if (MSVC)
   add_definitions (/D "_CRT_SECURE_NO_WARNINGS")
   # Note: __TBB_NO_IMPLICIT_LINKAGE is now set by onetbb.cmake
@@ -47,11 +47,11 @@ elseif(APPLE)
   #string(REGEX REPLACE "^.*X([0-9.]*).sdk$" "\\1" CMAKE_OSX_DEPLOYMENT_TARGET "${CMAKE_OSX_SYSROOT}")
 endif()
 
-# Enable C++11 mode on GCC / Clang
+# Enable C++20 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++20")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 endif()
 
 

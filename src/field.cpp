@@ -14,6 +14,7 @@
 */
 
 #include "field.h"
+#include <numbers>
 #include <tbb/global_control.h>
 
 namespace instant_meshes {
@@ -867,7 +868,7 @@ error_orientations_impl(const MultiResolutionHierarchy& mRes, int level, Functor
                 std::pair<Vector3f, Vector3f> value =
                     functor(q_i.normalized(), n_i, q_j.normalized(), n_j);
                 Float angle =
-                    fast_acos(std::min((Float)1, value.first.dot(value.second))) * 180 / M_PI;
+                    fast_acos(std::min((Float)1, value.first.dot(value.second))) * 180 / std::numbers::pi_v<Float>;
                 error += angle * angle;
             }
         }

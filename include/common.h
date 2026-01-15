@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <numbers>
 #include <thread>
 #include <vector>
 
@@ -247,7 +248,7 @@ inline float fast_acos(float x)
     ret = ret + 1.5707288f;
     ret = ret * std::sqrt(1.0f - x);
     ret = ret - 2.0f * negate * ret;
-    return negate * (float)M_PI + ret;
+    return negate * std::numbers::pi_v<float> + ret;
 }
 
 template <typename T, typename U>
