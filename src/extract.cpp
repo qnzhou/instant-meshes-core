@@ -12,8 +12,8 @@
 */
 
 #include "extract.h"
-#include <parallel_stable_sort.h>
 #include <tbb/concurrent_vector.h>
+#include <algorithm>
 #include <set>
 #include <tuple>
 #include <unordered_set>
@@ -196,7 +196,7 @@ void extract_graph(
         };
 
         if (deterministic)
-            pss::parallel_stable_sort(
+            std::stable_sort(
                 collapse_edge_vec.begin(),
                 collapse_edge_vec.end(),
                 WeightedEdgeComparator());

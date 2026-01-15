@@ -12,6 +12,8 @@
 */
 
 #include "bvh.h"
+#include <tbb/task_group.h>
+#include <tbb/parallel_invoke.h>
 
 namespace instant_meshes {
 
@@ -23,7 +25,7 @@ struct Bins
     AABB bounds[BIN_COUNT];
 };
 
-struct BVHBuildTask : public tbb::task
+struct BVHBuildTask
 {
     enum { SERIAL_THRESHOLD = 32 };
     BVH& bvh;
@@ -38,7 +40,7 @@ struct BVHBuildTask : public tbb::task
         , temp(temp)
     {}
 
-    task* execute()
+    void execute(tbb::task_group* tg = nullptr)
     {
         const MatrixXu& F = *bvh.mF;
         const MatrixXf& V = *bvh.mV;
@@ -51,7 +53,7 @@ struct BVHBuildTask : public tbb::task
             const ProgressCallback& progress = bvh.mProgress;
             SHOW_PROGRESS_RANGE(range, total_size, "Constructing Bounding Volume Hierarchy");
             execute_serially(bvh, node_idx, start, end, temp);
-            return nullptr;
+            return;
         }
 
         int axis = node.aabb.largestAxis();
@@ -123,7 +125,7 @@ struct BVHBuildTask : public tbb::task
             /* Could not find a good split plane -- retry with
                more careful serial code just to be sure.. */
             execute_serially(bvh, node_idx, start, end, temp);
-            return nullptr;
+            return;
         }
 
         uint32_t left_count = bins.counts[best_index];
@@ -167,22 +169,25 @@ struct BVHBuildTask : public tbb::task
         memcpy(start, temp, size * sizeof(uint32_t));
         assert(offset_left == left_count && offset_right == size);
 
-        /* Create an empty parent task */
-        tbb::task& c = *new (allocate_continuation()) tbb::empty_task;
-        c.set_ref_count(2);
-
-        /* Post right subtree to scheduler */
-        BVHBuildTask& b =
-            *new (c.allocate_child())
-                BVHBuildTask(bvh, node_idx_right, start + left_count, end, temp + left_count);
-        spawn(b);
-
-        /* Directly start working on left subtree */
-        recycle_as_child_of(c);
-        node_idx = node_idx_left;
-        end = start + left_count;
-
-        return this;
+        /* Process both subtrees in parallel */
+        if (tg) {
+            tg->run([&, node_idx_right, left_count]() {
+                BVHBuildTask right_task(bvh, node_idx_right, start + left_count, end, temp + left_count);
+                right_task.execute(tg);
+            });
+            /* Process left subtree directly */
+            node_idx = node_idx_left;
+            end = start + left_count;
+            execute(tg);
+        } else {
+            /* Fallback to simple recursion if no task group */
+            BVHBuildTask left_task(bvh, node_idx_left, start, start + left_count, temp);
+            BVHBuildTask right_task(bvh, node_idx_right, start + left_count, end, temp + left_count);
+            tbb::parallel_invoke(
+                [&]() { left_task.execute(nullptr); },
+                [&]() { right_task.execute(nullptr); }
+            );
+        }
     }
 
     static void
@@ -322,9 +327,10 @@ void BVH::build(const ProgressCallback& progress)
 
     Timer<> timer;
     uint32_t* temp = new uint32_t[total_size];
-    BVHBuildTask& task = *new (tbb::task::allocate_root())
-                             BVHBuildTask(*this, 0u, mIndices, mIndices + total_size, temp);
-    tbb::task::spawn_root_and_wait(task);
+    tbb::task_group tg;
+    BVHBuildTask task(*this, 0u, mIndices, mIndices + total_size, temp);
+    task.execute(&tg);
+    tg.wait();
     delete[] temp;
 
     std::pair<Float, uint32_t> stats = statistics();

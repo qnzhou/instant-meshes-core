@@ -13,7 +13,7 @@
 */
 
 #include "hierarchy.h"
-#include <parallel_stable_sort.h>
+#include <algorithm>
 #include <pcg32.h>
 #include "dedge.h"
 #include "field.h"
@@ -71,7 +71,7 @@ AdjacencyMatrix downsample_graph(
     if (progress) progress("Downsampling graph (2/6)", 0.0f);
 
     if (deterministic)
-        pss::parallel_stable_sort(entries, entries + nLinks, std::less<Entry>());
+        std::stable_sort(entries, entries + nLinks, std::less<Entry>());
     else
         tbb::parallel_sort(entries, entries + nLinks, std::less<Entry>());
 

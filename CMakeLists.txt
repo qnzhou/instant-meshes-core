@@ -18,7 +18,7 @@ endif()
 # Sanitize build environment for static build with C++11
 if (MSVC)
   add_definitions (/D "_CRT_SECURE_NO_WARNINGS")
-  add_definitions (/D "__TBB_NO_IMPLICIT_LINKAGE")
+  # Note: __TBB_NO_IMPLICIT_LINKAGE is now set by onetbb.cmake
 
   # Parallel build on MSVC (all targets)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -84,15 +84,14 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(dset)
-include(pss)
 include(pcg32)
-include(tbb)
+include(onetbb)
 include(eigen)
 
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 add_library(instant-meshes-core STATIC ${SRC_FILES} ${INC_FILES})
-target_link_libraries(instant-meshes-core TBB::tbb dset::dset pss::pss pcg32::pcg32 Eigen3::Eigen)
+target_link_libraries(instant-meshes-core TBB::tbb dset::dset pcg32::pcg32 Eigen3::Eigen)
 target_include_directories(instant-meshes-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
