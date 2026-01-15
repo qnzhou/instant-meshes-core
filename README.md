@@ -8,6 +8,8 @@ Meshes](https://igl.ethz.ch/projects/instant-meshes/)"[^1] without any graphical
 
 ### Changes
 
+The following changes were made to the original codebase:
+
 - Removed all GUI-related code and dependencies
 - Added namespace around all code to avoid name clashes
 - Replace tbb with OneTBB v2021.12.0
