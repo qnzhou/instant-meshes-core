@@ -75,8 +75,6 @@ elseif(WIN32)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-include(dset)
-include(pcg32)
 include(onetbb)
 include(eigen)
 
@@ -84,8 +82,12 @@ file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 add_library(instant-meshes-core STATIC ${SRC_FILES} ${INC_FILES})
-target_link_libraries(instant-meshes-core TBB::tbb dset::dset pcg32::pcg32 Eigen3::Eigen)
-target_include_directories(instant-meshes-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(instant-meshes-core TBB::tbb Eigen3::Eigen)
+target_include_directories(instant-meshes-core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/dset")
+target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/pcg32")
 set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
 install(TARGETS instant-meshes-core
@@ -97,4 +99,3 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION include)
 install(EXPORT InstantMeshesCoreTargets
   DESTINATION lib/cmake/InstantMeshesCore
   NAMESPACE InstantMeshesCore::)
-
