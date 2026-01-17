@@ -2,16 +2,16 @@ if(TARGET dset::dset)
     return()
 endif()
 
-message(STATUS "Third-party (external): creating target 'dset::dset'")
+message(STATUS "Third-party (external): using bundled dset")
 
-include(CPM)
-CPMAddPackage(
-    NAME dset
-    GITHUB_REPOSITORY wjakob/dset
-    GIT_TAG 7967ef0e6041cd9d73b9c7f614ab8ae92e9e587a
-    DOWNLOAD_ONLY
-)
+set(dset_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../ext/dset")
+if(NOT EXISTS "${dset_SOURCE_DIR}/dset.h")
+    message(FATAL_ERROR "Bundled dset not found at ${dset_SOURCE_DIR}")
+endif()
 
 add_library(dset INTERFACE)
 target_include_directories(dset SYSTEM INTERFACE ${dset_SOURCE_DIR})
 add_library(dset::dset ALIAS dset)
+
+install(TARGETS dset EXPORT InstantMeshesCoreTargets)
+install(FILES "${dset_SOURCE_DIR}/dset.h" DESTINATION include)
