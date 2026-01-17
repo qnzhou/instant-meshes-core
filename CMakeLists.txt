@@ -88,3 +88,13 @@ target_link_libraries(instant-meshes-core TBB::tbb dset::dset pcg32::pcg32 Eigen
 target_include_directories(instant-meshes-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
+install(TARGETS instant-meshes-core
+  EXPORT InstantMeshesCoreTargets
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION include)
+install(EXPORT InstantMeshesCoreTargets
+  DESTINATION lib/cmake/InstantMeshesCore
+  NAMESPACE InstantMeshesCore::)
+
