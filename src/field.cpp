@@ -1793,13 +1793,13 @@ void Optimizer::wait()
     std::lock_guard<ordered_lock> lock(mRes.mutex());
     while (mRunning && (mOptimizePositions || mOptimizeOrientations)) mCond.wait(mRes.mutex());
 }
-extern int nprocs;
-
 void Optimizer::run()
 {
     const int levelIterations = 6;
     uint32_t operations = 0;
-    tbb::global_control control(tbb::global_control::max_allowed_parallelism, nprocs);
+    tbb::global_control control(
+        tbb::global_control::max_allowed_parallelism,
+        instant_meshes::get_nprocs());
 
     auto progress = [&](uint32_t ops) {
         operations += ops;
