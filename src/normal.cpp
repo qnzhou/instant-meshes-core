@@ -176,7 +176,7 @@ void generate_crease_normals(
     std::map<uint32_t, uint32_t>& creases,
     const ProgressCallback& progress)
 {
-    const Float dpThreshold = std::cos(angleThreshold * std::numbers::pi_v<Float> / 180);
+    const Float dpThreshold = std::cos(angleThreshold * kPi / 180);
 
     cout << "Computing vertex & crease normals .. ";
     cout.flush();
@@ -319,7 +319,7 @@ void generate_crease_normals(
     std::set<uint32_t>& creases,
     const ProgressCallback& progress)
 {
-    const Float dpThreshold = std::cos(angleThreshold * std::numbers::pi_v<Float> / 180);
+    const Float dpThreshold = std::cos(angleThreshold * kPi / 180);
 
     cout << "Computing vertex & crease normals .. ";
     cout.flush();

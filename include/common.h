@@ -28,7 +28,6 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
-#include <numbers>
 #include <thread>
 #include <vector>
 
@@ -69,6 +68,8 @@ typedef Eigen::Matrix<Float, 2, 2> Matrix2f;
 typedef Eigen::Matrix<Float, 3, 3> Matrix3f;
 typedef Eigen::Matrix<Float, 4, 4> Matrix4f;
 
+constexpr Float kPi = (Float)3.1415926535897932384626433832795;
+
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -76,6 +77,10 @@ using namespace std::placeholders;
 
 /* A callback to inform the GUI about progress of an operation */
 typedef std::function<void(const std::string&, Float)> ProgressCallback;
+
+// Control the maximum TBB parallelism used by the library.
+void set_nprocs(int value);
+int get_nprocs();
 
 #define PROGRESS_BLKSIZE (1 << 18)
 #define SHOW_PROGRESS(i, maxval, text) \
@@ -248,7 +253,7 @@ inline float fast_acos(float x)
     ret = ret + 1.5707288f;
     ret = ret * std::sqrt(1.0f - x);
     ret = ret - 2.0f * negate * ret;
-    return negate * std::numbers::pi_v<float> + ret;
+    return negate * static_cast<float>(kPi) + ret;
 }
 
 template <typename T, typename U>

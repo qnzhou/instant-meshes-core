@@ -651,7 +651,7 @@ void extract_faces(
                         Vector3f v2 = O.col(verts[(i + k + 2) % verts.size()].first);
                         Vector3f d0 = (v0 - v1).normalized();
                         Vector3f d1 = (v2 - v1).normalized();
-                        Float angle = std::acos(d0.dot(d1)) * 180.0f / std::numbers::pi_v<Float>;
+                        Float angle = std::acos(d0.dot(d1)) * 180.0f / kPi;
                         score += std::abs(angle - (posy == 4 ? 90 : 60));
                     }
 
