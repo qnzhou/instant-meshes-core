@@ -232,27 +232,29 @@ struct BVHBuildTask
             aabb.clear();
 
             Float tri_factor = BVH::T_tri / node.aabb.surfaceArea();
-            for (uint32_t i = size - 1; i >= 1; --i) {
-                uint32_t f = *(start + i);
-                if (pointcloud) {
-                    aabb.expandBy(V.col(f));
-                } else {
-                    aabb.expandBy(V.col(F(0, f)));
-                    aabb.expandBy(V.col(F(1, f)));
-                    aabb.expandBy(V.col(F(2, f)));
-                }
+            if (size > 0) {
+                for (uint32_t i = size - 1; i >= 1; --i) {
+                    uint32_t f = *(start + i);
+                    if (pointcloud) {
+                        aabb.expandBy(V.col(f));
+                    } else {
+                        aabb.expandBy(V.col(F(0, f)));
+                        aabb.expandBy(V.col(F(1, f)));
+                        aabb.expandBy(V.col(F(2, f)));
+                    }
 
-                float left_area = left_areas[i - 1];
-                float right_area = aabb.surfaceArea();
-                uint32_t prims_left = i;
-                uint32_t prims_right = size - i;
+                    float left_area = left_areas[i - 1];
+                    float right_area = aabb.surfaceArea();
+                    uint32_t prims_left = i;
+                    uint32_t prims_right = size - i;
 
-                Float sah_cost = 2.0f * BVH::T_aabb +
-                                 tri_factor * (prims_left * left_area + prims_right * right_area);
-                if (sah_cost < best_cost) {
-                    best_cost = sah_cost;
-                    best_index = i;
-                    best_axis = axis;
+                    Float sah_cost = 2.0f * BVH::T_aabb +
+                                     tri_factor * (prims_left * left_area + prims_right * right_area);
+                    if (sah_cost < best_cost) {
+                        best_cost = sah_cost;
+                        best_index = i;
+                        best_axis = axis;
+                    }
                 }
             }
         }
