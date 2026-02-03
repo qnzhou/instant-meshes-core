@@ -32,6 +32,8 @@
 #include <utility>
 #include <iterator>
 
+namespace instant_meshes {
+
 namespace pss {
 
 namespace internal {
@@ -104,3 +106,5 @@ public:
 } // namespace internal
 
 } // namespace pss
+
+} // namespace instant_meshes
