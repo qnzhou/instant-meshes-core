@@ -36,6 +36,8 @@
 #include <cassert>
 #include <algorithm>
 
+namespace instant_meshes {
+
 /// PCG32 Pseudorandom number generator
 struct pcg32 {
     /// Initialize the pseudorandom number generator with default seed
@@ -205,5 +207,7 @@ struct pcg32 {
     uint64_t state;  // RNG state.  All values are possible.
     uint64_t inc;    // Controls which RNG sequence (stream) is selected. Must *always* be odd.
 };
+
+} // namespace instant_meshes
 
 #endif // __PCG32_H
