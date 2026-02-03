@@ -30,6 +30,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <cassert>
 
 #define PARALLELIZE
 #define SINGLE_PRECISION
