@@ -322,6 +322,8 @@ AdjacencyMatrix generate_adjacency_matrix_pointcloud(
             }
         });
 
+    delete[] adj_sets;
+
     /* Use a heuristic to estimate some useful quantities for point clouds (this
        is a biased estimate due to the kNN queries, but it's convenient and
        reasonably accurate) */
