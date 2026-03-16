@@ -12,6 +12,7 @@
 */
 
 #include "bvh.h"
+#include <cassert>
 #include <numbers>
 #include <tbb/task_group.h>
 #include <tbb/parallel_invoke.h>
