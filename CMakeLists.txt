@@ -3,6 +3,7 @@ project(InstantMeshesCore)
 
 option(INSTANT_MESHES_DEV_MODE "Instant meshes developer mode" OFF)
 option(INSTANT_MESHES_SANITIZE_THREAD "Build InstantMeshesCore with ThreadSanitizer (-fsanitize=thread)" OFF)
+option(INSTANT_MESHES_BUILD_TESTS "Build InstantMeshesCore unit tests (Catch2)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -118,3 +119,10 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION include)
 install(EXPORT InstantMeshesCoreTargets
   DESTINATION lib/cmake/InstantMeshesCore
   NAMESPACE InstantMeshesCore::)
+
+# Unit tests (Catch2). Fetched and built only when explicitly enabled.
+if(INSTANT_MESHES_BUILD_TESTS)
+  include(catch2)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
