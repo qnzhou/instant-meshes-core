@@ -1913,7 +1913,7 @@ void Optimizer::run()
                 if (mOptimizePositions) {
                     if (!mRes.frozenO()) freeze_ivars_positions(mRes, 0, mExtrinsic, mPoSy);
                 }
-                stop();
+                stopLocked(); // run() already holds mRes.mutex()
             }
             mLevelIterations = 0;
         }

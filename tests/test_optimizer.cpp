@@ -28,6 +28,8 @@
 #include <meshstats.h>
 #include <normal.h>
 
+#include <tbb/global_control.h>
+
 #include <atomic>
 #include <chrono>
 #include <cstdio>
@@ -65,6 +67,15 @@ void make_grid(int n, MatrixXu& F, MatrixXf& V)
 
 TEST_CASE("Optimizer orientation and position smoke test", "[optimizer][threads]")
 {
+    // Cap TBB parallelism for the whole test. On a many-core machine, running the parallel
+    // kernels (build_dedge and the optimizer) with one worker per core on this tiny mesh is
+    // pathologically slow under ThreadSanitizer: dozens of oversubscribed TBB workers spin and
+    // occasionally starve forward progress past the test timeout. Four active threads still
+    // fully exercise the worker/main flag handshake this test targets. Constructed first so it
+    // also bounds the mesh-prep kernels below (global_control limits active concurrency even
+    // when the shared TBB pool was already created at full width by earlier test cases).
+    tbb::global_control tbb_limit(tbb::global_control::max_allowed_parallelism, 4);
+
     MatrixXu F;
     MatrixXf V;
     make_grid(24, F, V);
@@ -133,6 +144,10 @@ TEST_CASE("Optimizer orientation and position smoke test", "[optimizer][threads]
     optimizer.notify();
     optimizer.wait();
 
+    // Let the worker re-park before shutdown() so the mRunning update/notify handshake is
+    // exercised deterministically -- this is the interleaving that catches an unsynchronized
+    // mRunning write (should stay clean under TSan, and must not hang in join()).
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     optimizer.shutdown();
 
     done.store(true, std::memory_order_relaxed);
