@@ -43,3 +43,22 @@ jobs:
                   cmake --build build-tsan -j
             - name: test (ThreadSanitizer)
               run: ctest --test-dir build-tsan --output-on-failure
+
+    test-AddressSanitizer:
+        runs-on: ubuntu-latest
+        env:
+            CC: clang
+            CXX: clang++
+            # Leak detection on; any address/leak error is fatal and fails the job.
+            ASAN_OPTIONS: detect_leaks=1
+        steps:
+            - uses: actions/checkout@v4
+            - name: build (AddressSanitizer)
+              run: |
+                  cmake -S . -B build-asan \
+                    -DINSTANT_MESHES_BUILD_TESTS=On \
+                    -DINSTANT_MESHES_SANITIZE_ADDRESS=On \
+                    -DCMAKE_BUILD_TYPE=RelWithDebInfo
+                  cmake --build build-asan -j
+            - name: test (AddressSanitizer)
+              run: ctest --test-dir build-asan --output-on-failure

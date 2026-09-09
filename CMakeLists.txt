@@ -3,6 +3,7 @@ project(InstantMeshesCore)
 
 option(INSTANT_MESHES_DEV_MODE "Instant meshes developer mode" OFF)
 option(INSTANT_MESHES_SANITIZE_THREAD "Build InstantMeshesCore with ThreadSanitizer (-fsanitize=thread)" OFF)
+option(INSTANT_MESHES_SANITIZE_ADDRESS "Build InstantMeshesCore with AddressSanitizer (-fsanitize=address)" OFF)
 option(INSTANT_MESHES_BUILD_TESTS "Build InstantMeshesCore unit tests (Catch2)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -76,22 +77,33 @@ elseif(WIN32)
   set(EXTRA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/resources/im.rc")
 endif()
 
-# ThreadSanitizer support.
+# Sanitizer support (Thread / Address).
 #
-# Enabling TSan globally is not enough for a TBB-based project. We also set TBB_SANITIZE so
-# OneTBB disables features that are incompatible with TSan (ITT notifications and LTO). Both
-# must happen *before* OneTBB is fetched/configured below, and the compile/link flags must be
-# added before the TBB and library targets are created so their objects get instrumented too.
+# Enabling a sanitizer globally is not enough for a TBB-based project. We also set TBB_SANITIZE
+# so OneTBB disables features that are incompatible with sanitizers (ITT notifications and LTO).
+# Both must happen *before* OneTBB is fetched/configured below, and the compile/link flags must
+# be added before the TBB and library targets are created so their objects get instrumented too.
 # TBB_SANITIZE is a plain (non-cache) variable that OneTBB itself promotes to the cache; use a
 # dedicated build directory, since toggling it off requires a fresh configure.
-if(INSTANT_MESHES_SANITIZE_THREAD)
+if(INSTANT_MESHES_SANITIZE_THREAD AND INSTANT_MESHES_SANITIZE_ADDRESS)
+  message(FATAL_ERROR
+    "INSTANT_MESHES_SANITIZE_THREAD and INSTANT_MESHES_SANITIZE_ADDRESS are mutually exclusive.")
+endif()
+
+if(INSTANT_MESHES_SANITIZE_THREAD OR INSTANT_MESHES_SANITIZE_ADDRESS)
   if(MSVC)
-    message(FATAL_ERROR "INSTANT_MESHES_SANITIZE_THREAD: ThreadSanitizer is not supported with MSVC.")
+    message(FATAL_ERROR "Sanitizers are only wired up for Clang/GCC builds here, not MSVC.")
   endif()
-  message(STATUS "InstantMeshesCore: enabling ThreadSanitizer (-fsanitize=thread)")
-  set(TBB_SANITIZE "thread")
-  add_compile_options(-fsanitize=thread -g -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=thread)
+  if(INSTANT_MESHES_SANITIZE_THREAD)
+    set(_im_sanitizer "thread")
+    set(TBB_SANITIZE "thread")
+  else()
+    set(_im_sanitizer "address")
+    set(TBB_SANITIZE "address -fno-omit-frame-pointer")
+  endif()
+  message(STATUS "InstantMeshesCore: enabling sanitizer (-fsanitize=${_im_sanitizer})")
+  add_compile_options(-fsanitize=${_im_sanitizer} -g -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=${_im_sanitizer})
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
