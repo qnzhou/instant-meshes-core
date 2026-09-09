@@ -253,14 +253,6 @@ class Optimizer
 public:
     Optimizer(MultiResolutionHierarchy& mRes, bool interactive);
 
-    // Clears the optimization flags and wakes waiters. Caller must hold mRes.mutex().
-    void stopLocked()
-    {
-        if (mOptimizeOrientations) mRes.propagateSolution(mRoSy);
-        mOptimizePositions = mOptimizeOrientations = false;
-        notify();
-    }
-
     void stop()
     {
         std::lock_guard<ordered_lock> lock(mRes.mutex());
@@ -317,6 +309,15 @@ public:
     void run();
 
 protected:
+    // Clears the optimization flags and wakes waiters. Caller must hold mRes.mutex().
+    // Internal helper (not public) so external callers cannot invoke it without the lock.
+    void stopLocked()
+    {
+        if (mOptimizeOrientations) mRes.propagateSolution(mRoSy);
+        mOptimizePositions = mOptimizeOrientations = false;
+        notify();
+    }
+
     MultiResolutionHierarchy& mRes;
     std::vector<std::pair<bool, std::vector<uint32_t>>> mAttractorStrokes;
     bool mRunning;
