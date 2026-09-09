@@ -104,7 +104,9 @@ TEST_CASE("Optimizer orientation and position smoke test", "[optimizer][threads]
     // so a hang surfaces as a failing exit code instead of blocking the whole run.
     std::atomic<bool> done{false};
     std::thread watchdog([&done] {
-        for (int i = 0; i < 600 && !done.load(std::memory_order_relaxed); ++i)
+        // Generous margin: under a sanitizer on a slow/loaded CI runner this test can take
+        // tens of seconds, so only treat a multi-minute stall as a deadlock.
+        for (int i = 0; i < 1800 && !done.load(std::memory_order_relaxed); ++i)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         if (!done.load(std::memory_order_relaxed)) {
             std::fprintf(stderr, "Optimizer test watchdog: deadlock detected, aborting.\n");

@@ -23,4 +23,6 @@ set_target_properties(instant_meshes_core_tests PROPERTIES
 # Register each TEST_CASE with CTest via Catch2's discovery helper (CMAKE_MODULE_PATH was
 # extended with Catch2's `extras` directory in cmake/catch2.cmake).
 include(Catch)
-catch_discover_tests(instant_meshes_core_tests)
+# Hard per-test wall-clock backstop for CI. The sanitized Optimizer test is the slow one and
+# also has its own in-process watchdog; this is the outer safety net.
+catch_discover_tests(instant_meshes_core_tests PROPERTIES TIMEOUT 300)

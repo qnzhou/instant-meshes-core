@@ -9,17 +9,37 @@ jobs:
             - uses: actions/checkout@v4
             - name: build
               run: |
-                  mkdir build
-                  cd build
-                  cmake .. -DMTET_BUILD_TESTS=On -DCMAKE_BUILD_TYPE=Release
-                  cmake --build . --config Release -j
+                  cmake -S . -B build -DINSTANT_MESHES_BUILD_TESTS=On -DCMAKE_BUILD_TYPE=Release
+                  cmake --build build --config Release -j
+            - name: test
+              run: ctest --test-dir build --build-config Release --output-on-failure
+
     build-Windows:
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
             - name: build
               run: |
-                  mkdir build
-                  cd build
-                  cmake .. -DCMAKE_GENERATOR_PLATFORM=x64 -DMTET_BUILD_TESTS=On
-                  cmake --build . --config Release -j
+                  cmake -S . -B build -DCMAKE_GENERATOR_PLATFORM=x64 -DINSTANT_MESHES_BUILD_TESTS=On
+                  cmake --build build --config Release -j
+            - name: test
+              run: ctest --test-dir build --build-config Release --output-on-failure
+
+    test-ThreadSanitizer:
+        runs-on: ubuntu-latest
+        env:
+            CC: clang
+            CXX: clang++
+            # Report every race (don't stop at the first) and fail the job if any is found.
+            TSAN_OPTIONS: halt_on_error=0:second_deadlock_stack=1:history_size=7
+        steps:
+            - uses: actions/checkout@v4
+            - name: build (ThreadSanitizer)
+              run: |
+                  cmake -S . -B build-tsan \
+                    -DINSTANT_MESHES_BUILD_TESTS=On \
+                    -DINSTANT_MESHES_SANITIZE_THREAD=On \
+                    -DCMAKE_BUILD_TYPE=RelWithDebInfo
+                  cmake --build build-tsan -j
+            - name: test (ThreadSanitizer)
+              run: ctest --test-dir build-tsan --output-on-failure
