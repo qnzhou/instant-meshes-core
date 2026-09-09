@@ -13,6 +13,8 @@
 
 #include "dedge.h"
 
+#include <atomic>
+
 namespace instant_meshes {
 
 void build_dedge(
@@ -51,11 +53,25 @@ void build_dedge(
                             "Mesh data contains an out-of-bounds vertex reference!");
                     if (idx_cur == idx_next) continue;
 
-                    tmp[edge_id] = std::make_pair(idx_next, INVALID);
-                    if (!atomicCompareAndExchange(&V2E[idx_cur], edge_id, INVALID)) {
-                        uint32_t idx = V2E[idx_cur];
-                        while (!atomicCompareAndExchange(&tmp[idx].second, edge_id, INVALID))
-                            idx = tmp[idx].second;
+                    // V2E[idx_cur] and tmp[*].second are updated concurrently by other
+                    // threads via atomic compare-exchange, so every access to them must go
+                    // through std::atomic_ref -- mixing atomic and plain accesses on the same
+                    // location is a data race (undefined behavior). A failed compare-exchange
+                    // returns the current value, which also removes the previous plain reads.
+                    tmp[edge_id].first = idx_next;
+                    std::atomic_ref<uint32_t>(tmp[edge_id].second).store(INVALID);
+
+                    std::atomic_ref<uint32_t> head(V2E[idx_cur]);
+                    uint32_t expected = INVALID;
+                    if (!head.compare_exchange_strong(expected, edge_id)) {
+                        // Another edge already owns this vertex; append to the linked list.
+                        uint32_t idx = expected;
+                        for (;;) {
+                            std::atomic_ref<uint32_t> next(tmp[idx].second);
+                            uint32_t slot = INVALID;
+                            if (next.compare_exchange_strong(slot, edge_id)) break;
+                            idx = slot;
+                        }
                     }
                 }
             }
