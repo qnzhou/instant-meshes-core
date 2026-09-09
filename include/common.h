@@ -201,6 +201,17 @@ inline bool atomicCompareAndExchange(volatile uint32_t* v, uint32_t newValue, ui
 #endif
 }
 
+// Atomic load, so reads of a location updated by atomicCompareAndExchange() are themselves
+// atomic (mixing atomic and plain accesses on the same location is a data race).
+inline uint32_t atomicRead(volatile uint32_t* v)
+{
+#if defined(_WIN32)
+    return (uint32_t)_InterlockedCompareExchange(reinterpret_cast<volatile long*>(v), 0, 0);
+#else
+    return __atomic_load_n(v, __ATOMIC_SEQ_CST);
+#endif
+}
+
 inline uint32_t atomicAdd(volatile uint32_t* dst, uint32_t delta)
 {
 #if defined(_MSC_VER)

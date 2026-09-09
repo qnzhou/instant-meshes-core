@@ -120,7 +120,7 @@ target_include_directories(instant-meshes-core PUBLIC
   $<INSTALL_INTERFACE:include>)
 target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/dset")
 target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/pcg32")
-set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
 install(TARGETS instant-meshes-core
   EXPORT InstantMeshesCoreTargets

@@ -17,7 +17,7 @@ target_link_libraries(instant_meshes_core_tests PRIVATE
     instant-meshes-core
     Catch2::Catch2WithMain)
 set_target_properties(instant_meshes_core_tests PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES)
 
 # Register each TEST_CASE with CTest via Catch2's discovery helper (CMAKE_MODULE_PATH was
