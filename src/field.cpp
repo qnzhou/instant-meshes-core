@@ -1752,6 +1752,10 @@ Optimizer::Optimizer(MultiResolutionHierarchy& mRes, bool interactive)
 
 void Optimizer::optimizeOrientations(int level)
 {
+    // Modify the mOptimize* predicate flags under the same mutex the worker holds when it
+    // reads them in run(), so the change is published with a happens-before edge (avoids a
+    // data race and a potential lost wakeup / deadlock).
+    std::lock_guard<ordered_lock> lock(mRes.mutex());
     if (level >= 0) {
         mLevel = level;
         mHierarchical = false;
@@ -1771,6 +1775,8 @@ void Optimizer::optimizeOrientations(int level)
 
 void Optimizer::optimizePositions(int level)
 {
+    // See optimizeOrientations(): the predicate flags must be written under mRes.mutex().
+    std::lock_guard<ordered_lock> lock(mRes.mutex());
     if (level >= 0) {
         mLevel = level;
         mHierarchical = false;

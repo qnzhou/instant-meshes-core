@@ -10,7 +10,9 @@
 # governing permissions and limitations under the License.
 #
 
-add_executable(instant_meshes_core_tests test_instant_meshes_core.cpp)
+add_executable(instant_meshes_core_tests
+    test_instant_meshes_core.cpp
+    test_optimizer.cpp)
 target_link_libraries(instant_meshes_core_tests PRIVATE
     instant-meshes-core
     Catch2::Catch2WithMain)
