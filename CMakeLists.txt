@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.25.0)
 project(InstantMeshesCore)
 
 option(INSTANT_MESHES_DEV_MODE "Instant meshes developer mode" OFF)
+option(INSTANT_MESHES_SANITIZE_THREAD "Build InstantMeshesCore with ThreadSanitizer (-fsanitize=thread)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -72,6 +73,24 @@ if (APPLE)
   set(EXTRA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/resources/im.icns")
 elseif(WIN32)
   set(EXTRA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/resources/im.rc")
+endif()
+
+# ThreadSanitizer support.
+#
+# Enabling TSan globally is not enough for a TBB-based project. We also set TBB_SANITIZE so
+# OneTBB disables features that are incompatible with TSan (ITT notifications and LTO). Both
+# must happen *before* OneTBB is fetched/configured below, and the compile/link flags must be
+# added before the TBB and library targets are created so their objects get instrumented too.
+# TBB_SANITIZE is a plain (non-cache) variable that OneTBB itself promotes to the cache; use a
+# dedicated build directory, since toggling it off requires a fresh configure.
+if(INSTANT_MESHES_SANITIZE_THREAD)
+  if(MSVC)
+    message(FATAL_ERROR "INSTANT_MESHES_SANITIZE_THREAD: ThreadSanitizer is not supported with MSVC.")
+  endif()
+  message(STATUS "InstantMeshesCore: enabling ThreadSanitizer (-fsanitize=thread)")
+  set(TBB_SANITIZE "thread")
+  add_compile_options(-fsanitize=thread -g -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=thread)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
