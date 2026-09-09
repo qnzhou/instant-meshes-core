@@ -2,10 +2,10 @@
     test_optimizer.cpp -- Threaded smoke test for the field Optimizer.
 
     This exercises the orientation/position optimization pipeline, which spawns a worker
-    thread. It is primarily intended to be run under ThreadSanitizer: the Optimizer's
-    optimizeOrientations()/optimizePositions() write the mOptimize* predicate flags without
-    holding mRes.mutex(), while the worker reads them under that mutex, so TSan should flag a
-    data race here.
+    thread. It is primarily a regression test to be run under ThreadSanitizer: the Optimizer's
+    optimizeOrientations()/optimizePositions() and the worker's run() both access the mOptimize*
+    predicate flags, and this test drives the notify()/wait() handshake that touches them across
+    threads. It should stay clean under TSan now that those flags are written under mRes.mutex().
 
     Copyright 2026 Adobe. All rights reserved.
     This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -119,12 +119,10 @@ TEST_CASE("Optimizer orientation and position smoke test", "[optimizer][threads]
     optimizer.setPoSy(4);
     optimizer.setExtrinsic(true);
 
-    // Give the worker thread time to reach mCond.wait() and park. This forces the
-    // interleaving in which the worker is already waiting when optimizeOrientations() writes
-    // the predicate flags without holding mRes.mutex(): the worker's wakeup re-acquires the
-    // mutex with no happens-before edge to that write, so the unsynchronized flag access is a
-    // genuine data race that ThreadSanitizer can observe. Without this delay the main thread
-    // often grabs the mutex first (in wait()), accidentally ordering the write and hiding it.
+    // Give the worker thread time to reach mCond.wait() and park before we drive the
+    // notify()/wait() handshake. This makes the cross-thread ordering of the mOptimize* flag
+    // accesses deterministic under sanitizers -- with the mutex fix in place the run stays
+    // clean, and this is the interleaving that previously exposed the (now fixed) flag race.
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     optimizer.optimizeOrientations(-1);

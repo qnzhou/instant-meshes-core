@@ -232,7 +232,7 @@ inline float atomicAdd(volatile float* dst, float delta)
 #if defined(__i386__) || defined(__amd64__)
         __asm__ __volatile__("pause\n");
 #endif
-        oldVal.f = *dst;
+        oldVal.i = atomicRead(reinterpret_cast<volatile uint32_t*>(dst));
         newVal.f = oldVal.f + delta;
     } while (!atomicCompareAndExchange((volatile uint32_t*)dst, newVal.i, oldVal.i));
     return newVal.f;
