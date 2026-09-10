@@ -2,6 +2,9 @@ cmake_minimum_required (VERSION 3.25.0)
 project(InstantMeshesCore)
 
 option(INSTANT_MESHES_DEV_MODE "Instant meshes developer mode" OFF)
+option(INSTANT_MESHES_SANITIZE_THREAD "Build InstantMeshesCore with ThreadSanitizer (-fsanitize=thread)" OFF)
+option(INSTANT_MESHES_SANITIZE_ADDRESS "Build InstantMeshesCore with AddressSanitizer (-fsanitize=address)" OFF)
+option(INSTANT_MESHES_BUILD_TESTS "Build InstantMeshesCore unit tests (Catch2)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -74,6 +77,35 @@ elseif(WIN32)
   set(EXTRA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/resources/im.rc")
 endif()
 
+# Sanitizer support (Thread / Address).
+#
+# Enabling a sanitizer globally is not enough for a TBB-based project. We also set TBB_SANITIZE
+# so OneTBB disables features that are incompatible with sanitizers (ITT notifications and LTO).
+# Both must happen *before* OneTBB is fetched/configured below, and the compile/link flags must
+# be added before the TBB and library targets are created so their objects get instrumented too.
+# TBB_SANITIZE is a plain (non-cache) variable that OneTBB itself promotes to the cache; use a
+# dedicated build directory, since toggling it off requires a fresh configure.
+if(INSTANT_MESHES_SANITIZE_THREAD AND INSTANT_MESHES_SANITIZE_ADDRESS)
+  message(FATAL_ERROR
+    "INSTANT_MESHES_SANITIZE_THREAD and INSTANT_MESHES_SANITIZE_ADDRESS are mutually exclusive.")
+endif()
+
+if(INSTANT_MESHES_SANITIZE_THREAD OR INSTANT_MESHES_SANITIZE_ADDRESS)
+  if(MSVC)
+    message(FATAL_ERROR "Sanitizers are only wired up for Clang/GCC builds here, not MSVC.")
+  endif()
+  if(INSTANT_MESHES_SANITIZE_THREAD)
+    set(_im_sanitizer "thread")
+    set(TBB_SANITIZE "thread")
+  else()
+    set(_im_sanitizer "address")
+    set(TBB_SANITIZE "address -fno-omit-frame-pointer")
+  endif()
+  message(STATUS "InstantMeshesCore: enabling sanitizer (-fsanitize=${_im_sanitizer})")
+  add_compile_options(-fsanitize=${_im_sanitizer} -g -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=${_im_sanitizer})
+endif()
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(onetbb)
 include(eigen)
@@ -88,7 +120,7 @@ target_include_directories(instant-meshes-core PUBLIC
   $<INSTALL_INTERFACE:include>)
 target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/dset")
 target_include_directories(instant-meshes-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ext/pcg32")
-set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+set_target_properties(instant-meshes-core PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
 install(TARGETS instant-meshes-core
   EXPORT InstantMeshesCoreTargets
@@ -99,3 +131,10 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION include)
 install(EXPORT InstantMeshesCoreTargets
   DESTINATION lib/cmake/InstantMeshesCore
   NAMESPACE InstantMeshesCore::)
+
+# Unit tests (Catch2). Fetched and built only when explicitly enabled.
+if(INSTANT_MESHES_BUILD_TESTS)
+  include(catch2)
+  enable_testing()
+  add_subdirectory(tests)
+endif()

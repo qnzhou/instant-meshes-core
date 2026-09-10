@@ -255,19 +255,27 @@ public:
 
     void stop()
     {
-        if (mOptimizeOrientations) mRes.propagateSolution(mRoSy);
-        mOptimizePositions = mOptimizeOrientations = false;
-        notify();
+        std::lock_guard<ordered_lock> lock(mRes.mutex());
+        stopLocked();
     }
 
     void shutdown()
     {
-        mRunning = false;
+        // mRunning is the worker's wait predicate; write it under the mutex the worker reads
+        // it with, so the update is published (no data race, no lost-wakeup hang in join()).
+        {
+            std::lock_guard<ordered_lock> lock(mRes.mutex());
+            mRunning = false;
+        }
         notify();
         mThread.join();
     }
 
-    bool active() { return mOptimizePositions | mOptimizeOrientations; }
+    bool active()
+    {
+        std::lock_guard<ordered_lock> lock(mRes.mutex());
+        return mOptimizePositions | mOptimizeOrientations;
+    }
     inline void notify() { mCond.notify_all(); }
 
     void optimizeOrientations(int level);
@@ -301,6 +309,15 @@ public:
     void run();
 
 protected:
+    // Clears the optimization flags and wakes waiters. Caller must hold mRes.mutex().
+    // Internal helper (not public) so external callers cannot invoke it without the lock.
+    void stopLocked()
+    {
+        if (mOptimizeOrientations) mRes.propagateSolution(mRoSy);
+        mOptimizePositions = mOptimizeOrientations = false;
+        notify();
+    }
+
     MultiResolutionHierarchy& mRes;
     std::vector<std::pair<bool, std::vector<uint32_t>>> mAttractorStrokes;
     bool mRunning;

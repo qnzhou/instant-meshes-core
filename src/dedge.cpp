@@ -51,11 +51,14 @@ void build_dedge(
                             "Mesh data contains an out-of-bounds vertex reference!");
                     if (idx_cur == idx_next) continue;
 
+                    // V2E[idx_cur] and tmp[*].second are updated concurrently by other threads
+                    // via atomicCompareAndExchange(), so reads of them must be atomic too --
+                    // mixing atomic and plain accesses on the same location is a data race.
                     tmp[edge_id] = std::make_pair(idx_next, INVALID);
                     if (!atomicCompareAndExchange(&V2E[idx_cur], edge_id, INVALID)) {
-                        uint32_t idx = V2E[idx_cur];
+                        uint32_t idx = atomicRead(&V2E[idx_cur]);
                         while (!atomicCompareAndExchange(&tmp[idx].second, edge_id, INVALID))
-                            idx = tmp[idx].second;
+                            idx = atomicRead(&tmp[idx].second);
                     }
                 }
             }
